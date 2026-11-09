@@ -1,4 +1,4 @@
-# taches
+# taches (dépôt gestiontaches)
 
 Mes tâches rangées par projet, sur **taches.pocharlume.fr**. Claude les tient à jour tout seul grâce au serveur MCP
 intégré (il crée, passe en cours et coche les tâches du travail qu'il fait) ; je les vois et les coche depuis le site,

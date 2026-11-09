@@ -1,7 +1,7 @@
 # taches
 
 Gestionnaire de tâches par projet sur taches.pocharlume.fr (VPS OVH partagé avec Pocharlume), avec serveur MCP
-pour que Claude le tienne à jour. Voir [README.md](README.md).
+pour que Claude le tienne à jour. Dépôt : github.com/fuforudude/gestiontaches. Voir [README.md](README.md).
 
 ## Commandes
 - Lancer : `npm run dev` (après `cp .env.exemple .env`)
