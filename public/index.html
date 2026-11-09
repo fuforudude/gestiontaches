@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Mes tâches</title>
+  <link rel="icon" href="/statique/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/statique/style.css">
+  <script src="/statique/app.js" defer></script>
+</head>
+<body>
+  <section id="connexion" class="connexion" hidden>
+    <form id="form-connexion" class="panneau">
+      <h1>Mes tâches</h1>
+      <label>Identifiant <input name="identifiant" autocomplete="username" required></label>
+      <label>Mot de passe <input name="motDePasse" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Se connecter</button>
+      <p id="erreur-connexion" class="erreur" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="appli" hidden>
+    <header class="entete">
+      <h1>Mes tâches</h1>
+      <nav class="filtres" aria-label="Statut">
+        <button type="button" data-filtre="ouvertes" aria-pressed="true">À faire</button>
+        <button type="button" data-filtre="faites" aria-pressed="false">Faites</button>
+        <button type="button" data-filtre="toutes" aria-pressed="false">Tout</button>
+      </nav>
+      <button type="button" id="deconnexion" class="discret" title="Se déconnecter" aria-label="Se déconnecter"><span class="libelle">Se déconnecter</span></button>
+    </header>
+    <div class="mise-en-page">
+      <aside class="projets" aria-label="Projets">
+        <ul id="liste-projets"></ul>
+        <form id="form-projet" class="ajout-projet">
+          <input name="nom" placeholder="Nouveau projet…" maxlength="80" aria-label="Nouveau projet">
+        </form>
+      </aside>
+      <main id="contenu" aria-live="polite"></main>
+    </div>
+    <p id="message" class="message" role="status"></p>
+  </div>
+</body>
+</html>
