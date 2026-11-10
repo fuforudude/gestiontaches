@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Site taches.pocharlume.fr sur le VPS : utilisateur et dossiers, service systemd, commandes, nginx.
+# Site taches.pocharlumetravail.fr sur le VPS : utilisateur et dossiers, service systemd, commandes, nginx.
 # À lancer en root : ssh -i ~/.ssh/vps_ovh ubuntu@145.239.83.184 'sudo bash -s' < infra/vps/site-taches.sh
 # Rejouable sans risque. Suppose le serveur préparé par Pocharlume/infra/vps/securiser.sh et site-pocharlume.sh
 # (nginx, certbot, snippets pocharlume-tls et pocharlume-acme) et Node >= 22.13 (installé pour telechargements).
@@ -7,7 +7,7 @@
 # relancer ce script passe en HTTPS.
 set -euo pipefail
 
-DOMAINE=taches.pocharlume.fr
+DOMAINE=taches.pocharlumetravail.fr
 APP=/srv/taches/app
 DONNEES=/var/lib/taches
 PORT=3200

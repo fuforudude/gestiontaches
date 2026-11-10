@@ -1,6 +1,6 @@
 # taches (dépôt gestiontaches)
 
-Mes tâches rangées par projet, sur **taches.pocharlume.fr**. Claude les tient à jour tout seul grâce au serveur MCP
+Mes tâches rangées par projet, sur **taches.pocharlumetravail.fr**. Claude les tient à jour tout seul grâce au serveur MCP
 intégré (il crée, passe en cours et coche les tâches du travail qu'il fait) ; je les vois et les coche depuis le site,
 sur PC comme sur téléphone.
 
@@ -12,7 +12,7 @@ sur PC comme sur téléphone.
 - Un seul compte, connexion par mot de passe (5 échecs = 15 min de blocage), cookie de session protégé.
 
 ## Serveur MCP
-Adresse : `https://taches.pocharlume.fr/mcp/<jeton>` (transport « Streamable HTTP », sans état). Le jeton se crée
+Adresse : `https://taches.pocharlumetravail.fr/mcp/<jeton>` (transport « Streamable HTTP », sans état). Le jeton se crée
 sur le serveur avec `sudo taches-jeton`, qui affiche l'adresse complète une seule fois et révoque l'ancienne.
 Le jeton peut aussi passer en en-tête `Authorization: Bearer <jeton>` sur `/mcp`.
 

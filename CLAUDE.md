@@ -1,6 +1,6 @@
 # taches
 
-Gestionnaire de tâches par projet sur taches.pocharlume.fr (VPS OVH partagé avec Pocharlume), avec serveur MCP
+Gestionnaire de tâches par projet sur taches.pocharlumetravail.fr (VPS OVH partagé avec Pocharlume), avec serveur MCP
 pour que Claude le tienne à jour. Dépôt : github.com/fuforudude/gestiontaches. Voir [README.md](README.md).
 
 ## Commandes

@@ -1,9 +1,9 @@
-# Mise en ligne : taches.pocharlume.fr
+# Mise en ligne : taches.pocharlumetravail.fr
 
 Même VPS que Pocharlume et telechargements (`145.239.83.184`). Le serveur ne se configure jamais à la main.
 
 ## 1. DNS (chez OVH, une fois)
-Zone `pocharlume.fr` : `taches` en A vers `145.239.83.184` et en AAAA vers `2001:41d0:601:1100::8457`.
+Zone `pocharlumetravail.fr` : `taches` en A vers `145.239.83.184` et en AAAA vers `2001:41d0:601:1100::8457`.
 
 ## 2. Préparer le serveur (rejouable)
 ```bash
@@ -15,7 +15,7 @@ les journaux).
 
 ## 3. Certificat HTTPS (une fois le DNS en place)
 ```bash
-ssh -i ~/.ssh/vps_ovh ubuntu@145.239.83.184 'sudo certbot certonly --webroot -w /var/www/acme -d taches.pocharlume.fr --non-interactive --deploy-hook "systemctl reload nginx"'
+ssh -i ~/.ssh/vps_ovh ubuntu@145.239.83.184 'sudo certbot certonly --webroot -w /var/www/acme -d taches.pocharlumetravail.fr --non-interactive --deploy-hook "systemctl reload nginx"'
 ```
 puis relancer l'étape 2, qui passe en HTTPS.
 
