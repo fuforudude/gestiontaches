@@ -67,8 +67,9 @@ systemctl daemon-reload
 systemctl enable taches.service
 if [ -e "$APP/dist/serveur.js" ]; then systemctl restart taches.service; fi
 
-echo '== Commandes taches-admin (compte du site) et taches-jeton (adresse du serveur MCP)'
-for outil in admin jeton; do
+echo "== Commandes taches-cle (lien d'inscription d'une clé d'accès) et taches-jeton (adresse du serveur MCP)"
+rm -f /usr/local/bin/taches-admin
+for outil in cle jeton; do
   ecrire /usr/local/bin/taches-$outil <<EOF
 #!/bin/sh
 cd $APP && exec sudo -u taches env DOSSIER_DONNEES=$DONNEES ORIGINE=https://$DOMAINE \\
@@ -106,7 +107,8 @@ SITE=$(cat <<EOF
     location / {
         include snippets/taches-proxy.conf;
     }
-    location = /api/connexion {
+    # Connexion et inscription de clés : défis à usage unique, mais on borne quand même le rythme.
+    location ~ ^/api/(connexion|cles)(/options)?$ {
         limit_req zone=taches_connexion burst=5 nodelay;
         include snippets/taches-proxy.conf;
     }

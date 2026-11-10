@@ -15,7 +15,7 @@ export default tseslint.config(
   { files: ['public/**/*.js'], ...tseslint.configs.disableTypeChecked },
   {
     files: ['public/**/*.js'],
-    languageOptions: { globals: { document: 'readonly', window: 'readonly', fetch: 'readonly', navigator: 'readonly', confirm: 'readonly', prompt: 'readonly', location: 'readonly', setInterval: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly', URLSearchParams: 'readonly' } },
+    languageOptions: { globals: { document: 'readonly', window: 'readonly', fetch: 'readonly', navigator: 'readonly', confirm: 'readonly', prompt: 'readonly', location: 'readonly', setInterval: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly', URLSearchParams: 'readonly', atob: 'readonly', btoa: 'readonly', history: 'readonly', Cles: 'readonly' } },
   },
   { files: ['eslint.config.js'], ...tseslint.configs.disableTypeChecked },
 );

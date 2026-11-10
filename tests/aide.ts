@@ -1,30 +1,45 @@
-// Application de test : base en mémoire, horloge réglable, compte connecté et jeton MCP prêts.
+// Application de test : base en mémoire, horloge réglable, un appareil inscrit et connecté, jeton MCP prêt.
 import { creerApplication, type Application } from '../src/app.js';
 import type { Config } from '../src/config.js';
+import { Authentificateur } from './authentificateur.js';
 
 export const ORIGINE = 'https://taches.exemple.test';
-export const IDENTIFIANT = 'titouan';
-export const MOT_DE_PASSE = 'un mot de passe assez long';
+export const RP_ID = 'taches.exemple.test';
 
 export interface Banc extends Application {
   horloge: { instant: number };
+  /** Cookie de session de l'appareil inscrit. */
   cookie: string;
+  appareil: Authentificateur;
   jeton: string;
   requete: (chemin: string, init?: RequestInit) => Promise<Response>;
-  /** Appel de l'API du site, connecté. */
-  site: (methode: string, chemin: string, corps?: unknown) => Promise<Response>;
-  /** Message JSON-RPC envoyé au serveur MCP avec le bon jeton. */
+  /** Appel de l'API du site avec le cookie donné (par défaut celui de l'appareil connecté). */
+  site: (methode: string, chemin: string, corps?: unknown, cookie?: string) => Promise<Response>;
   mcp: (corps: unknown, chemin?: string, entetes?: Record<string, string>) => Promise<Response>;
-  /** Appel d'un outil MCP ; renvoie le résultat de l'outil. */
   outil: (nom: string, args?: Record<string, unknown>) => Promise<{ isError?: boolean; valeur: unknown; texte: string }>;
   fermer: () => void;
+}
+
+export const nouvelAppareil = () => new Authentificateur(RP_ID, ORIGINE);
+export const cookieDe = (reponse: Response) => (reponse.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+export const jetonDuLien = (lien: string) => new URL(lien).searchParams.get('inscription') ?? '';
+
+/** Inscription complète d'un appareil avec un lien : renvoie la réponse finale (cookie de session dedans). */
+export async function inscrireAvecLien(banc: Banc, appareil: Authentificateur, lien: string, nom = 'PC'): Promise<Response> {
+  const options = (await (await banc.site('POST', '/cles/options', { lien }, '')).json()) as { challenge: string };
+  return banc.site('POST', '/cles', { lien, nom, reponse: appareil.creer(options) }, '');
+}
+
+/** Connexion d'un appareil déjà inscrit. */
+export async function connecterAppareil(banc: Banc, appareil: Authentificateur): Promise<Response> {
+  const options = (await (await banc.site('POST', '/connexion/options', {}, '')).json()) as { challenge: string };
+  return banc.site('POST', '/connexion', { reponse: appareil.utiliser(options) }, '');
 }
 
 export async function creerBanc(): Promise<Banc> {
   const config: Config = { port: 0, dossierDonnees: '.', origine: ORIGINE, cookieSecurise: true };
   const horloge = { instant: Date.UTC(2026, 10, 9, 12) };
   const application = creerApplication(config, { cheminBase: ':memory:', maintenant: () => horloge.instant });
-  await application.acces.definirAdmin(IDENTIFIANT, MOT_DE_PASSE);
   const jeton = application.acces.nouveauJetonMcp();
 
   const requete = (chemin: string, init?: RequestInit) => Promise.resolve(application.app.request(chemin, init));
@@ -34,12 +49,13 @@ export async function creerBanc(): Promise<Banc> {
     ...application,
     horloge,
     cookie: '',
+    appareil: nouvelAppareil(),
     jeton,
     requete,
-    site: (methode, chemin, corps) =>
+    site: (methode, chemin, corps, cookie) =>
       requete(`/api${chemin}`, {
         method: methode,
-        headers: { origin: ORIGINE, cookie: banc.cookie, ...(corps === undefined ? {} : { 'content-type': 'application/json' }) },
+        headers: { origin: ORIGINE, cookie: cookie ?? banc.cookie, ...(corps === undefined ? {} : { 'content-type': 'application/json' }) },
         ...(corps === undefined ? {} : { body: JSON.stringify(corps) }),
       }),
     mcp: (corps, chemin = `/mcp/${jeton}`, entetes = {}) =>
@@ -64,16 +80,8 @@ export async function creerBanc(): Promise<Banc> {
       application.base.close();
     },
   };
-  banc.cookie = await connecter(banc);
+  const inscription = await inscrireAvecLien(banc, banc.appareil, jetonDuLien(application.acces.creerLienInscription()));
+  if (inscription.status !== 201) throw new Error(`Inscription refusée : ${inscription.status} ${await inscription.text()}`);
+  banc.cookie = cookieDe(inscription);
   return banc;
-}
-
-export async function connecter(banc: Banc, motDePasse = MOT_DE_PASSE, ip = '203.0.113.1'): Promise<string> {
-  const reponse = await banc.requete('/api/connexion', {
-    method: 'POST',
-    headers: { origin: ORIGINE, 'content-type': 'application/json', 'x-real-ip': ip },
-    body: JSON.stringify({ identifiant: IDENTIFIANT, motDePasse }),
-  });
-  if (reponse.status !== 200) return '';
-  return (reponse.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
 }

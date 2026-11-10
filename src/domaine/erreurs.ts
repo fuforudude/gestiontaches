@@ -1,5 +1,5 @@
 // Erreurs métier : les couches basses les lèvent, les routes les traduisent en réponses HTTP ou MCP.
-export type CodeErreur = 'validation' | 'introuvable' | 'conflit' | 'non_connecte' | 'trop_de_tentatives' | 'trop_gros' | 'origine_refusee';
+export type CodeErreur = 'validation' | 'introuvable' | 'conflit' | 'non_connecte' | 'trop_gros' | 'origine_refusee';
 
 export class ErreurMetier extends Error {
   constructor(

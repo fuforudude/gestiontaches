@@ -43,6 +43,35 @@ export const MIGRATIONS: readonly string[] = [
     cree_le integer not null
   );
   `,
+  // 2 — Clés d'accès (passkeys) à la place du mot de passe : le compte et les tentatives disparaissent,
+  // les sessions ne dépendent plus d'un compte (les sessions ouvertes sont fermées).
+  `
+  drop table session;
+  drop table admin;
+  drop table tentative_connexion;
+  create table session (
+    jeton_hache text primary key,
+    expire_le integer not null
+  );
+  create table cle_acces (
+    id text primary key,
+    cle_publique blob not null,
+    compteur integer not null default 0,
+    transports text not null default '',
+    nom text not null,
+    cree_le integer not null,
+    utilisee_le integer
+  );
+  create table defi (
+    valeur text primary key,
+    usage text not null check (usage in ('inscription', 'connexion')),
+    expire_le integer not null
+  );
+  create table lien_inscription (
+    empreinte text primary key,
+    expire_le integer not null
+  );
+  `,
 ];
 
 export type Base = DatabaseSync;

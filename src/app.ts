@@ -22,7 +22,6 @@ const STATUTS: Record<CodeErreur, ContentfulStatusCode> = {
   introuvable: 404,
   conflit: 409,
   trop_gros: 413,
-  trop_de_tentatives: 429,
 };
 
 const SECURITE: Record<string, string> = {
@@ -42,6 +41,7 @@ const DOSSIER_PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), '
 const STATIQUES: Record<string, { fichier: string; type: string }> = {
   '/': { fichier: 'index.html', type: 'text/html; charset=utf-8' },
   '/statique/app.js': { fichier: 'app.js', type: 'text/javascript; charset=utf-8' },
+  '/statique/cles.js': { fichier: 'cles.js', type: 'text/javascript; charset=utf-8' },
   '/statique/style.css': { fichier: 'style.css', type: 'text/css; charset=utf-8' },
   '/statique/icone.svg': { fichier: 'icone.svg', type: 'image/svg+xml' },
 };
@@ -56,7 +56,7 @@ export interface Application {
 export function creerApplication(config: Config, options: { cheminBase?: string; maintenant?: () => number } = {}): Application {
   const maintenant = options.maintenant ?? Date.now;
   const base = ouvrirBase(options.cheminBase ?? path.join(config.dossierDonnees, 'taches.db'));
-  const acces = new ServiceAcces(new DepotAcces(base), maintenant);
+  const acces = new ServiceAcces(new DepotAcces(base), maintenant, config.origine);
   const taches = new ServiceTaches(base, new DepotTaches(base), maintenant);
 
   const app = new Hono();

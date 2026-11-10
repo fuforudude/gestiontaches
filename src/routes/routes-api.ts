@@ -4,7 +4,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import type { Config } from '../config.js';
 import { ErreurMetier } from '../domaine/erreurs.js';
-import type { ServiceAcces } from '../services/service-acces.js';
+import type { ServiceAcces, Session } from '../services/service-acces.js';
 import type { ServiceTaches } from '../services/service-taches.js';
 import { idDepuis, lireJson } from './utilitaires.js';
 
@@ -21,10 +21,24 @@ export function routesApi(acces: ServiceAcces, taches: ServiceTaches, config: Co
     if (methode !== 'GET' && methode !== 'HEAD' && c.req.header('origin') !== config.origine) {
       throw new ErreurMetier('origine_refusee', 'Origine refusée.');
     }
-    const libre = (methode === 'POST' && c.req.path === '/api/connexion') || (methode === 'GET' && c.req.path === '/api/session');
+    // Ouverts sans session : la connexion, et l'inscription d'une clé (qui exige alors un lien valide, vérifié par le service).
+    const libre =
+      (methode === 'GET' && c.req.path === '/api/session') ||
+      (methode === 'POST' && ['/api/connexion', '/api/connexion/options', '/api/cles', '/api/cles/options'].includes(c.req.path));
     if (!libre && !acces.sessionValide(getCookie(c, COOKIE))) throw new ErreurMetier('non_connecte', 'Connexion requise.');
     await suite();
   });
+
+  const poserCookie = (c: Context, session: Session) => {
+    setCookie(c, COOKIE, session.jeton, {
+      path: '/',
+      httpOnly: true,
+      secure: config.cookieSecurise,
+      sameSite: 'Strict',
+      expires: new Date(session.expireLe),
+    });
+  };
+  const sessionOuverte = (c: Context) => acces.sessionValide(getCookie(c, COOKIE));
 
   api.on(
     ['POST', 'PATCH'],
@@ -39,13 +53,31 @@ export function routesApi(acces: ServiceAcces, taches: ServiceTaches, config: Co
 
   api.get('/session', (c) => c.json({ connecte: acces.sessionValide(getCookie(c, COOKIE)) }));
 
+  // Connexion par clé d'accès : options (défi), puis réponse signée par l'appareil.
+  api.post('/connexion/options', async (c) => c.json(await acces.optionsConnexion()));
   api.post('/connexion', async (c) => {
     const corps = await lireJson(c);
-    const ip = c.req.header('x-real-ip') ?? 'inconnue';
-    const { jeton, expireLe } = await acces.connecter(corps.identifiant, corps.motDePasse, ip);
-    setCookie(c, COOKIE, jeton, { path: '/', httpOnly: true, secure: config.cookieSecurise, sameSite: 'Strict', expires: new Date(expireLe) });
+    poserCookie(c, await acces.connecter(corps.reponse));
     return c.json({ connecte: true });
   });
+
+  // Clés d'accès : inscription (session ouverte ou lien à usage unique), liste, retrait, lien pour un autre appareil.
+  api.post('/cles/options', async (c) => {
+    const corps = await lireJson(c);
+    return c.json(await acces.optionsInscription(sessionOuverte(c), corps.lien));
+  });
+  api.post('/cles', async (c) => {
+    const corps = await lireJson(c);
+    const { session, cle } = await acces.inscrire(sessionOuverte(c), { lien: corps.lien, nom: corps.nom, reponse: corps.reponse });
+    if (session) poserCookie(c, session);
+    return c.json(cle, 201);
+  });
+  api.get('/cles', (c) => c.json(acces.cles()));
+  api.delete('/cles/:id', (c) => {
+    acces.supprimerCle(c.req.param('id'));
+    return c.body(null, 204);
+  });
+  api.post('/cles/lien', (c) => c.json({ lien: acces.creerLienInscription() }, 201));
 
   api.post('/deconnexion', (c) => {
     acces.deconnecter(getCookie(c, COOKIE));

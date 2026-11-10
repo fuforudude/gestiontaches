@@ -1,7 +1,7 @@
-// Site : connexion, page, API des projets et des tâches, garde-fous.
+// Site : page, API des projets et des tâches, garde-fous (la connexion est dans cles.test.ts).
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { lireConfig } from '../src/config.js';
-import { connecter, creerBanc, IDENTIFIANT, MOT_DE_PASSE, ORIGINE, type Banc } from './aide.js';
+import { creerBanc, ORIGINE, type Banc } from './aide.js';
 
 let banc: Banc;
 beforeEach(async () => {
@@ -10,8 +10,6 @@ beforeEach(async () => {
 afterEach(() => {
   banc.fermer();
 });
-
-const MINUTE = 60 * 1000;
 
 interface Etat {
   projets: { id: number; nom: string; aFaire: number; enCours: number; faites: number }[];
@@ -26,19 +24,8 @@ describe('page et connexion', () => {
     expect(await page.text()).toMatch(/Mes tâches/);
     expect(page.headers.get('content-security-policy')).toMatch(/default-src 'self'/);
     expect((await banc.requete('/statique/app.js')).status).toBe(200);
+    expect((await banc.requete('/statique/cles.js')).status).toBe(200);
     expect((await banc.requete('/nimporte')).status).toBe(404);
-  });
-
-  it('ouvre une session avec un cookie protégé', async () => {
-    const reponse = await banc.requete('/api/connexion', {
-      method: 'POST',
-      headers: { origin: ORIGINE, 'content-type': 'application/json' },
-      body: JSON.stringify({ identifiant: IDENTIFIANT, motDePasse: MOT_DE_PASSE }),
-    });
-    const cookie = reponse.headers.get('set-cookie') ?? '';
-    expect(cookie).toMatch(/HttpOnly/);
-    expect(cookie).toMatch(/Secure/);
-    expect(cookie).toMatch(/SameSite=Strict/);
   });
 
   it('exige une session pour l\'API et la ferme à la déconnexion', async () => {
@@ -46,19 +33,6 @@ describe('page et connexion', () => {
     expect((await banc.site('POST', '/deconnexion')).status).toBe(200);
     expect((await banc.site('GET', '/etat')).status).toBe(401);
     expect(await (await banc.site('GET', '/session')).json()).toEqual({ connecte: false });
-  });
-
-  it('refuse un mauvais mot de passe et bloque après 5 échecs', async () => {
-    for (let i = 0; i < 5; i++) {
-      expect(await connecter(banc, 'faux', '198.51.100.7')).toBe('');
-      banc.horloge.instant += MINUTE;
-    }
-    const bloquee = await banc.requete('/api/connexion', {
-      method: 'POST',
-      headers: { origin: ORIGINE, 'content-type': 'application/json', 'x-real-ip': '198.51.100.7' },
-      body: JSON.stringify({ identifiant: IDENTIFIANT, motDePasse: MOT_DE_PASSE }),
-    });
-    expect(bloquee.status).toBe(429);
   });
 
   it('refuse une action venue d\'une autre origine', async () => {

@@ -7,16 +7,31 @@
   <title>Mes tâches</title>
   <link rel="icon" href="/statique/icone.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/statique/style.css">
+  <script src="/statique/cles.js" defer></script>
   <script src="/statique/app.js" defer></script>
 </head>
 <body>
   <section id="connexion" class="connexion" hidden>
-    <form id="form-connexion" class="panneau">
+    <div class="panneau">
       <h1>Mes tâches</h1>
-      <label>Identifiant <input name="identifiant" autocomplete="username" required></label>
-      <label>Mot de passe <input name="motDePasse" type="password" autocomplete="current-password" required></label>
-      <button type="submit">Se connecter</button>
+      <button type="button" id="bouton-connexion">Se connecter avec une clé d’accès</button>
+      <p class="aide">Empreinte, Windows Hello ou Face ID : pas de mot de passe.</p>
       <p id="erreur-connexion" class="erreur" role="alert"></p>
+      <details class="aide">
+        <summary>Pas encore de clé sur cet appareil ?</summary>
+        <p>Depuis un appareil déjà connecté : « Appareils » → « Lien pour un autre appareil ». Sinon, sur le serveur :
+          <code>sudo taches-cle</code>. Le lien donné sert une fois, pendant 15 minutes.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="inscription" class="connexion" hidden>
+    <form id="form-inscription" class="panneau">
+      <h1>Enregistrer cet appareil</h1>
+      <p class="aide">Une clé d’accès va être créée sur cet appareil. Elle remplacera le mot de passe.</p>
+      <label>Nom de l’appareil <input name="nom" maxlength="60" required></label>
+      <button type="submit">Créer la clé d’accès</button>
+      <p id="erreur-inscription" class="erreur" role="alert"></p>
     </form>
   </section>
 
@@ -28,7 +43,10 @@
         <button type="button" data-filtre="faites" aria-pressed="false">Faites</button>
         <button type="button" data-filtre="toutes" aria-pressed="false">Tout</button>
       </nav>
-      <button type="button" id="deconnexion" class="discret" title="Se déconnecter" aria-label="Se déconnecter"><span class="libelle">Se déconnecter</span></button>
+      <span class="actions-entete">
+        <button type="button" id="ouvrir-appareils" class="discret" title="Appareils et clés d’accès" aria-label="Appareils et clés d’accès"><span class="libelle">Appareils</span></button>
+        <button type="button" id="deconnexion" class="discret" title="Se déconnecter" aria-label="Se déconnecter"><span class="libelle">Se déconnecter</span></button>
+      </span>
     </header>
     <div class="mise-en-page">
       <aside class="projets" aria-label="Projets">
@@ -41,5 +59,23 @@
     </div>
     <p id="message" class="message" role="status"></p>
   </div>
+
+  <dialog id="appareils" aria-labelledby="titre-appareils">
+    <div class="titre-dialogue">
+      <h2 id="titre-appareils">Appareils</h2>
+      <button type="button" class="icone" id="fermer-appareils" aria-label="Fermer">×</button>
+    </div>
+    <p class="aide">Chaque appareil a sa propre clé d’accès. Retire celle d’un appareil perdu.</p>
+    <ul id="liste-cles" class="cles"></ul>
+    <div class="actions">
+      <button type="button" id="ajouter-cet-appareil">Ajouter cet appareil</button>
+      <button type="button" id="lien-autre-appareil" class="discret">Lien pour un autre appareil</button>
+    </div>
+    <div id="zone-lien" class="zone-lien" hidden>
+      <p class="aide">À ouvrir sur l’autre appareil (une fois, dans les 15 minutes) :</p>
+      <input id="lien-genere" readonly aria-label="Lien d’inscription">
+      <button type="button" id="copier-lien" class="discret">Copier</button>
+    </div>
+  </dialog>
 </body>
 </html>

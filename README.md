@@ -9,7 +9,10 @@ sur PC comme sur téléphone.
 - Cocher / décocher, passer une tâche « en cours », modifier titre, détails et projet, supprimer.
 - Ajouter une tâche ou un projet à la main. Les tâches créées par Claude portent la mention « par Claude ».
 - La page se relit toute seule toutes les 15 s : ce que Claude change apparaît sans recharger.
-- Un seul compte, connexion par mot de passe (5 échecs = 15 min de blocage), cookie de session protégé.
+- Pas de mot de passe : connexion par **clé d'accès** (passkey : empreinte, Windows Hello, Face ID), une par appareil,
+  session de 90 jours. Panneau « Appareils » pour voir et retirer les clés, et créer un lien d'inscription pour un
+  autre appareil (usage unique, 15 minutes). Première clé, ou secours si tous les appareils sont perdus :
+  `sudo taches-cle` sur le serveur.
 
 ## Serveur MCP
 Adresse : `https://taches.pocharlumetravail.fr/mcp/<jeton>` (transport « Streamable HTTP », sans état). Le jeton se crée

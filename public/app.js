@@ -35,7 +35,7 @@ async function api(methode, chemin, corps) {
     headers: corps === undefined ? {} : { 'content-type': 'application/json' },
     body: corps === undefined ? undefined : JSON.stringify(corps),
   });
-  if (reponse.status === 401 && chemin !== '/connexion') {
+  if (reponse.status === 401 && !['/connexion', '/cles', '/cles/options'].includes(chemin)) {
     afficherConnexion();
     throw new Error('Connexion requise.');
   }
@@ -70,7 +70,7 @@ async function recharger() {
 function afficherConnexion() {
   $('appli').hidden = true;
   $('connexion').hidden = false;
-  document.querySelector('#form-connexion input').focus();
+  $('bouton-connexion').focus();
 }
 
 function afficherAppli() {
@@ -276,17 +276,123 @@ function supprimerProjet(projet) {
 
 // --- Démarrage ----------------------------------------------------------------------------------
 
-$('form-connexion').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const champs = e.target.elements;
+// --- Clés d'accès ---------------------------------------------------------------------------------
+
+const lienInscription = new URLSearchParams(location.search).get('inscription');
+
+$('bouton-connexion').addEventListener('click', async () => {
+  const bouton = $('bouton-connexion');
   $('erreur-connexion').textContent = '';
+  bouton.disabled = true;
   try {
-    await api('POST', '/connexion', { identifiant: champs.identifiant.value, motDePasse: champs.motDePasse.value });
-    champs.motDePasse.value = '';
+    const options = await api('POST', '/connexion/options', {});
+    await api('POST', '/connexion', { reponse: await Cles.utiliser(options) });
     afficherAppli();
     await recharger();
   } catch (erreur) {
     $('erreur-connexion').textContent = erreur.message;
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+$('form-inscription').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const bouton = e.target.querySelector('button');
+  $('erreur-inscription').textContent = '';
+  bouton.disabled = true;
+  try {
+    const options = await api('POST', '/cles/options', { lien: lienInscription });
+    const reponse = await Cles.creer(options);
+    await api('POST', '/cles', { lien: lienInscription, nom: e.target.elements.nom.value, reponse });
+    // Le lien est consommé : on le retire de l'adresse pour qu'un rechargement ne le redemande pas.
+    history.replaceState(null, '', '/');
+    $('inscription').hidden = true;
+    afficherAppli();
+    message('Clé d’accès créée : cet appareil se connecte maintenant sans mot de passe.');
+    await recharger();
+  } catch (erreur) {
+    $('erreur-inscription').textContent = erreur.message;
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+function dateLongue(instant) {
+  return new Date(instant).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+async function afficherCles() {
+  const cles = await api('GET', '/cles');
+  $('liste-cles').replaceChildren(
+    ...cles.map((c) =>
+      el(
+        'li',
+        {},
+        el(
+          'span',
+          { class: 'corps' },
+          el('span', { class: 'titre', texte: c.nom }),
+          el('span', { class: 'meta', texte: `ajoutée le ${dateLongue(c.creeLe)}${c.utiliseeLe ? ` · dernière connexion le ${dateLongue(c.utiliseeLe)}` : ''}` }),
+        ),
+        el('button', {
+          type: 'button',
+          class: 'icone',
+          title: 'Retirer cette clé',
+          'aria-label': `Retirer la clé « ${c.nom} »`,
+          texte: '×',
+          onclick: async () => {
+            if (!confirm(`Retirer la clé « ${c.nom} » ? Cet appareil ne pourra plus se connecter.`)) return;
+            try {
+              await api('DELETE', `/cles/${encodeURIComponent(c.id)}`);
+            } catch (erreur) {
+              message(erreur.message, true);
+            }
+            await afficherCles();
+          },
+        }),
+      ),
+    ),
+  );
+}
+
+$('ouvrir-appareils').addEventListener('click', async () => {
+  $('zone-lien').hidden = true;
+  $('appareils').showModal();
+  await afficherCles().catch((erreur) => message(erreur.message, true));
+});
+$('fermer-appareils').addEventListener('click', () => $('appareils').close());
+
+$('ajouter-cet-appareil').addEventListener('click', async () => {
+  try {
+    const options = await api('POST', '/cles/options', {});
+    const reponse = await Cles.creer(options);
+    const nom = prompt('Nom de cet appareil', Cles.nomProbable());
+    await api('POST', '/cles', { nom: nom ?? '', reponse });
+    message('Clé ajoutée pour cet appareil.');
+    await afficherCles();
+  } catch (erreur) {
+    message(erreur.message, true);
+  }
+});
+
+$('lien-autre-appareil').addEventListener('click', async () => {
+  try {
+    const { lien } = await api('POST', '/cles/lien');
+    $('lien-genere').value = lien;
+    $('zone-lien').hidden = false;
+    $('lien-genere').select();
+  } catch (erreur) {
+    message(erreur.message, true);
+  }
+});
+
+$('copier-lien').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('lien-genere').value);
+    message('Lien copié.');
+  } catch {
+    $('lien-genere').select();
   }
 });
 
@@ -322,6 +428,11 @@ document.addEventListener('visibilitychange', () => {
 });
 
 (async () => {
+  if (lienInscription) {
+    $('form-inscription').elements.nom.value = Cles.nomProbable();
+    $('inscription').hidden = false;
+    return;
+  }
   const { connecte } = await api('GET', '/session').catch(() => ({ connecte: false }));
   if (!connecte) return afficherConnexion();
   afficherAppli();
