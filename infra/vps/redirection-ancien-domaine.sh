@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Redirige les anciens noms des outils (taches. et telechargements. sur pocharlume.fr) vers pocharlumetravail.fr, chemin conservé.
+# Redirige les anciens noms (pocharlume.fr, www, travail, taches, telechargements) vers pocharlumetravail.fr, chemin conservé.
+# Le jeu passe de pocharlume.fr à pocharlume.pocharlumetravail.fr ; les autres gardent leur sous-domaine.
 # À lancer en root : ssh … 'sudo bash -s' < infra/vps/redirection-ancien-domaine.sh. Rejouable sans risque.
 # Chaque ancien nom garde son certificat Let's Encrypt (renouvelé tant que le DNS de l'ancien domaine pointe ici) :
 # sans certificat, il n'est redirigé qu'en HTTP. À supprimer (rm /etc/nginx/sites-enabled/ancien-domaine) quand
 # l'ancien domaine n'est plus renouvelé.
-# Le jeu (pocharlume.fr, www, travail) n est PAS concerné : il migrera plus tard vers pocharlume.pocharlumetravail.fr.
 set -euo pipefail
 
 NOUVEAU=pocharlumetravail.fr
 ANCIEN=pocharlume.fr
 # ancien nom : nouveau nom
-NOMS="taches.$ANCIEN:taches.$NOUVEAU telechargements.$ANCIEN:telechargements.$NOUVEAU"
+NOMS="$ANCIEN:pocharlume.$NOUVEAU www.$ANCIEN:pocharlume.$NOUVEAU travail.$ANCIEN:travail.$NOUVEAU taches.$ANCIEN:taches.$NOUVEAU telechargements.$ANCIEN:telechargements.$NOUVEAU"
 
 CONF=/tmp/ancien-domaine.conf.$$
 : > "$CONF"
